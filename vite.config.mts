@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import svgLoader from 'vite-svg-loader'
 
 export default defineConfig({
+    base: '/',
     plugins: [
         vue(),
         tailwindcss(),
