@@ -14,18 +14,36 @@ if (store.loading) {
 
 const b = store.allBookings.find(b => b.id === idFromRoute)
 
-let bookingFound = false
+let days = 0
+let hours = 0
 
-console.log('Booking Details:', b)
+if (b) {
+  const dateStart = dayjs(b.pickupDate)
+  const dateEnd = dayjs(b.returnDate)
 
+  const hoursDiff = dateEnd.diff(dateStart, 'hours');
+  days = Math.floor(hoursDiff / 24);
+  hours = hoursDiff - (days * 24);
+}
+
+function plural(baseString: string, count: number) {
+  if (count === 0) {
+    return '';
+  }
+
+  if (count % 10 === 1) {
+    return count.toString() + ' ' + baseString;
+  }
+
+  return count.toString() + ' ' + baseString + 's';
+}
 
 </script>
 
 <template>
   <AppHeader :showControls="false" />
 
-  <div class="booking-details flex flex-col items-center justify-center gap-8 w-10/12 ml-auto mr-auto"
-    v-if="b">
+  <div class="booking-details flex flex-col items-center justify-center gap-8 w-10/12 ml-auto mr-auto" v-if="b">
     <div class="about">
       <h1 class="text-4xl font-bold mt-4 text-teal-400">{{ b?.customerName }} </h1>
     </div>
@@ -45,6 +63,16 @@ console.log('Booking Details:', b)
       <BookingLineTime :time="dayjs(b?.returnDate).format('h:mm')" :pickUp="false" :id="b?.id ?? ''" />
       <BookingLineStation :station="b?.stationName ?? ''" :id="b?.id ?? ''" />
     </div>
+
+    <div class="booking-time text-right text-3xl font-light ml-4 text-slate-400"> Duration </div>
+
+    <div class="flex items-center justify-center mb-6 ml-auto mr-auto">
+      <div class="text-3xl font-bold text-teal-400">
+        <span v-if="days"> {{ plural('day', days) }}</span>
+        <span v-if="hours" class="ml-2"> {{ plural(' hour', hours) }}</span>
+      </div>
+    </div>
+
 
     <div class="text-sm">#{{ idFromRoute }}</div>
     <div>
