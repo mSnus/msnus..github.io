@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import logoUrl from '../assets/images/logo.svg'
+
 const props = defineProps({
   showControls: {
     type: Boolean,
@@ -16,7 +18,7 @@ const props = defineProps({
       xl:w-10/12 2xl:w-8/12" :class="props.showControls ? 'justify-between  w-full m-auto' : 'justify-center'"
       id="app-header">
       <div class="flex items-center px-6 " :class="props.showControls ? 'w-full' : 'w-fit'">
-        <img src="../assets/images/logo.svg" alt="Logo" class="logo" />
+        <img :src="logoUrl" alt="Logo" class="logo" />
       </div>
       <div class="flex items-stretch px-6 justify-between w-full" v-if="props.showControls">
         <WeekChooser />
