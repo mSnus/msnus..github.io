@@ -35,4 +35,5 @@ export type NormalizedBooking = {
     returnDate?: Date | null
 }
 
+export type BookingRecord = { bookings: NormalizedBooking[], date: string, dayName: string }
 export type BookingsByWeek = Record<string, NormalizedBooking[]>

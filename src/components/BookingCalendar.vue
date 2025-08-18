@@ -10,8 +10,6 @@ const store = useDataStore()
 const router = useRouter()
 const route = useRoute()
 
-const MAX_BOOKINGS = import.meta.env.VITE_MAX_BOOKINGS_PER_DAY
-
 onMounted(() => {
     store.load('2025-08-01')
 
@@ -25,47 +23,47 @@ onMounted(() => {
     }
 })
 
+const isWide = window.matchMedia("(min-width: 1280px)").matches;
+
+const gridClasses = !isWide ? 'grid-cols-2 grid-rows-3' : 'grid-cols-3 grid-rows-2';
+
 const bookings = computed(() => store.loading ? [] : store.bookingsForSelectedWeek)
 
 const bookingsByDay = computed(() => {
-    const map: Record<number, { bookings: typeof bookings.value, count: number }> = {}
+    if (!store.selectedWeek) return {}
+
+    const map: Record<number, { bookings: typeof bookings.value, count: number, date: string, dayName: string }> = {}
+    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const monday = weekKeyToMonday(store.selectedWeek)
+
 
     for (const b of bookings.value) {
+        // filter stations
         if (store.selectedStation && b.stationId !== store.selectedStation) continue
 
         if (!map[b.dayNumber]) {
-            map[b.dayNumber] = { bookings: [], count: 0 }
+            map[b.dayNumber] = { bookings: [], count: 0, date: '', dayName: '' }
         }
 
         map[b.dayNumber].bookings.push(b)
         map[b.dayNumber].count++
     }
 
-    return map
-})
-
-const dayDisplayMap = computed(() => {
-    if (!store.selectedWeek) return {}
-
-    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    const map: Record<number, { date: string, dayName: string }> = {}
-    const monday = weekKeyToMonday(store.selectedWeek)
-
-    for (let i = 1; i <= 9; i++) {
-        if (i === 7 || i === 9) {
-            map[i] = { date: i + ' DYB', dayName: 'FYR' }
-            continue
+    for (let i = 1; i <= 7; i++) {
+        if (!map[i]) {
+            map[i] = { bookings: [], count: 0, date: '', dayName: '' }
         }
-        let realDay = i == 8 ? 7 : i // user 6th and 9th day for control squares, Sunday in the middle
-        const date = dayjs(monday).add(realDay - 1, 'day').format('MMM, D')
-        const dayName = dayNames[realDay - 1]
-        map[i] = { date, dayName }
+
+        const date = dayjs(monday).add(i - 1, 'day').format('MMM, D')
+        const dayName = dayNames[i - 1]
+
+        map[i].date = date
+        map[i].dayName = dayName
     }
 
+    console.log('bookingsByDay', map)
     return map
 })
-
-
 
 // swipe tracking
 const touchStartX = ref<number | null>(null)
@@ -118,56 +116,40 @@ function previousWeek() {
     </div>
     <div v-else-if="store.error" class="text-pink-500 text-2xl">Error loading data: {{ store.error }}</div>
     <div v-else>
-        <div class="mb-4 flex w-screen" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
+        <div class="calendar-wrapper flex flex-col w-screen items-center justify-start"
+            @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
 
             <div v-if="!bookings.length" class="text-md bg-amber-100">No bookings this week</div>
 
-            <div class="booking-calendar 
-            w-full max-h-7/12
-            grid grid-cols-3 grid-rows-3
-            gap-x-4 pr-2 pl-2 pt-12">
-                <div v-for="(day, index) in dayDisplayMap" :key="index">
-                    <template v-if="(index != 7 && index != 9)">
-                        <DayDate :date="day.date" :day="day.dayName" class="day-headers mb-4" />
-                        <template v-if="bookingsByDay[index]">
-                            <!-- <DayBookings :number="bookingsByDay[day]?.length ?? 0" class="day-headers" /> -->
-                            <div v-for="b in bookingsByDay[index].bookings.slice(0, MAX_BOOKINGS)" :key="b.id"
-                                class="text-sm">
-
-                                <div class="flex items-start mb-6">
-                                    <BookingLineTime :time="b.bookTime" :pickUp="b.isPickup" :id="b.id" />
-                                    <BookingLineStation :station="b.stationName" :id="b.id" />
-                                </div>
-                            </div>
-                            <div v-if="bookingsByDay[index].count > MAX_BOOKINGS" class="text-xs text-gray-500">
-                                <DayBookings :number="bookingsByDay[index].count - MAX_BOOKINGS" />
-                            </div>
-                        </template>
+            <div class="calendar-grid
+            w-full grid
+            pr-2 pl-2" :class="gridClasses">
+                <template v-for="(booking, index) in bookingsByDay" :key="index">
+                    <template v-if="index < 7">
+                        <CalendarCard :booking="booking" />
                     </template>
-                    <template v-else-if="index == 7">
-                        <div class="week-control text-lg text-indigo-200 flex items-center justify-center w-full h-full"
-                            @click="previousWeek">
-                            &#9664; previous
-                        </div>
-                    </template>
-                    <template v-else="index == 9">
-                        <div class="week-control text-lg text-indigo-200 flex items-center justify-center w-full h-full"
-                            @click="nextWeek">next
-                            &#9654;
-                        </div>
-                    </template>
-                </div>
-
+                </template>
             </div>
 
+            <div class="calendar-sunday-controls w-full three-cell">
+                <div class="week-control text-lg text-indigo-200 flex items-center justify-center w-full h-full cursor-pointer"
+                    @click="previousWeek">
+                    &#9664; previous
+                </div>
+                <CalendarCard :booking="bookingsByDay[7]" />
+                <div class="week-control text-lg text-indigo-200 flex items-center justify-center w-full h-full cursor-pointer"
+                    @click="nextWeek">next
+                    &#9654;
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-.booking-calendar {
+/* .calendar-wrapper {
     height: calc(100vh - var(--header-height) - 2rem);
-}
+} */
 
 .loading-spinner {
     background-image: url('/src/assets/images/spinner.gif');
@@ -184,6 +166,72 @@ function previousWeek() {
 .week-control {
     touch-action: manipulation;
 }
+
+.three-cell {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: calc(80rem - 1px)) {
+    .calendar-grid .calendar-card:nth-child(n) {
+        padding-top: calc(var(--spacing) * 4);
+        border-bottom: solid 1px var(--color-teal-300);
+    }
+
+    .calendar-grid .calendar-card:nth-child(2n) {
+        border-left: solid 1px var(--color-teal-300);
+    }
+
+    .three-cell .calendar-card:nth-child(2n) {
+        padding-top: calc(var(--spacing) * 4);
+        border-left: solid 1px var(--color-teal-300);
+        border-right: solid 1px var(--color-teal-300);
+        width: 50vw;
+    }
+}
+
+@media (min-width: 80rem) {
+    .calendar-grid .calendar-card:nth-child(-n+3) {
+        border-bottom: solid 1px var(--color-teal-300);
+        padding-bottom: calc(var(--spacing) * 4);
+    }
+
+    .calendar-grid .calendar-card:nth-child(n+4) {
+        padding-top: calc(var(--spacing) * 4);
+    }
+
+    .calendar-grid .calendar-card:nth-child(3n+1) {
+        border-right: solid 1px var(--color-teal-300);
+    }
+
+    .calendar-grid .calendar-card:nth-child(3n) {
+        border-left: solid 1px var(--color-teal-300);
+    }
+
+    .calendar-grid .calendar-card:nth-child(n+7) {
+        border-top: solid 1px var(--color-red-300);
+        padding-top: calc(var(--spacing) * 4);
+    }
+
+    .calendar-sunday-controls {
+        border-top: solid 1px var(--color-teal-300);
+    }
+
+    .calendar-sunday-controls .calendar-card:nth-child(2) {
+        border-left: solid 1px var(--color-teal-300);
+        border-right: solid 1px var(--color-teal-300);
+        padding-top: calc(var(--spacing) * 4);
+    }
+
+    .three-cell .calendar-card:nth-child(2n) {
+        padding-top: calc(var(--spacing) * 4);
+        border-left: solid 1px var(--color-teal-300);
+        border-right: solid 1px var(--color-teal-300);
+        width: 33vw;
+    }
+}
 </style>
 
 <script lang="ts">
@@ -192,6 +240,7 @@ import DayDate from './calendar/DayDate.vue';
 import DayBookings from './calendar/DayBookings.vue';
 import BookingLineTime from './calendar/BookingLineTime.vue';
 import BookingLineStation from './calendar/BookingLineStation.vue';
+import CalendarCard from './calendar/CalendarCard.vue';
 
 export default defineComponent({
     name: 'BookingCalendar',
