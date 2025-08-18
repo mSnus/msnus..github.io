@@ -1,21 +1,18 @@
 # Road Surfer test task (Back-office Dashboard) 
 
-### based on  vue3-boilerplate
+### A dashboard for caravan bookings
 
-using Vue Router 4, Pinia 2, Typescript 5, Webpack 5, Prettier and More.
+Calendar-style grid for bookings: pick-up or return of van on some station (City) at specific time.
+Booking details page with customer data, start, end and duration
 
-**And not using the Vue CLI.**
+** Tech stack **
 
-### Architecture
+Vue, Vue Router, Tailwind, Pinia, dayjs, etc
+TypeScript
 
-```text
-├─ public           // static assets.
-├─ service          // commands and webpack configurations.
-├─ src
-│  ├─ assets        // assets such as images or font files.
-│  ├─ components    // universal Vue components.
-│  ├─ router        // view's routers config.
-│  ├─ stores        // Pinia stores.
-│  ├─ typings       // typescript .d.ts files.
-│  └─ views         // pages.
-```
+### UX highlights
+
+- handy week selector instead of pagination
+- week navigations with swipe or prev/next buttons built into calendar grid
+- adaptive design different column layouts/fonts for mobile/wide screens
+- auto-suggest search filter for stations (cities)
