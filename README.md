@@ -5,7 +5,7 @@
 Calendar-style grid for bookings: pick-up or return of van on some station (City) at specific time.
 Booking details page with customer data, start, end and duration
 
-** Tech stack **
+**Tech stack**
 
 Vue, Vue Router, Tailwind, Pinia, dayjs, etc
 TypeScript
