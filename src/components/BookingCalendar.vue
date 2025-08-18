@@ -61,7 +61,6 @@ const bookingsByDay = computed(() => {
         map[i].dayName = dayName
     }
 
-    console.log('bookingsByDay', map)
     return map
 })
 
