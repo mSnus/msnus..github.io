@@ -8,6 +8,7 @@ Booking details page with customer data, start, end and duration
 **Tech stack**
 
 Vue, Vue Router, Tailwind, Pinia, dayjs, etc
+
 TypeScript
 
 ### UX highlights
